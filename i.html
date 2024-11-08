@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculatrice Moderne</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f5f5f5;
+            position: relative;
+            transition: background 0.5s;
+            background-size: cover;
+        }
+
+        .calculator {
+            width: 320px;
+            padding: 20px;
+            background-color: #333;
+            border-radius: 15px;
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        #display {
+            width: 100%;
+            height: 60px;
+            background-color: #000;
+            color: #fff;
+            text-align: right;
+            font-size: 2.5em;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .button {
+            width: 100%;
+            padding: 20px;
+            font-size: 1.5em;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            color: #fff;
+            background-color: #888;
+        }
+
+        .button.operation {
+            background-color: orange;
+        }
+
+        .button.double {
+            grid-column: span 2;
+        }
+
+        .button:active {
+            transform: scale(0.95);
+        }
+
+        /* Boutons pour changer la couleur et le fond */
+        .color-button, .background-button {
+            position: absolute;
+            top: 20px;
+            padding: 10px 15px;
+            background-color: #555;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .color-button {
+            left: 20px;
+        }
+
+        .background-button {
+            left: 120px;
+        }
+
+        /* Icones musique et paramètres */
+        .settings-icon, .music-icon {
+            position: absolute;
+            top: 20px;
+            font-size: 30px;
+            cursor: pointer;
+        }
+
+        .settings-icon {
+            right: 20px;
+        }
+
+        .music-icon {
+            right: 70px;
+        }
+
+        /* Fenêtre modale pour les paramètres */
+        .settings-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .settings-modal .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            width: 300px;
+            text-align: center;
+        }
+
+        .close-btn {
+            float: right;
+            cursor: pointer;
+        }
+
+        .volume-slider {
+            width: 100%;
+            margin: 20px 0;
+        }
+
+        .contact-info {
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        .beta-info {
+            margin-top: 15px;
+            color: red;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="calculator" id="calculator">
+        <div id="display">0</div>
+        <div class="buttons">
+            <button class="button" onclick="clearDisplay()">AC</button>
+            <button class="button">%</button>
+            <button class="button">±</button>
+            <button class="button operation" onclick="inputOperation('/')">÷</button>
+
+            <button class="button" onclick="inputNumber(7)">7</button>
+            <button class="button" onclick="inputNumber(8)">8</button>
+            <button class="button" onclick="inputNumber(9)">9</button>
+            <button class="button operation" onclick="inputOperation('*')">×</button>
+
+            <button class="button" onclick="inputNumber(4)">4</button>
+            <button class="button" onclick="inputNumber(5)">5</button>
+            <button class="button" onclick="inputNumber(6)">6</button>
+            <button class="button operation" onclick="inputOperation('-')">−</button>
+
+            <button class="button" onclick="inputNumber(1)">1</button>
+            <button class="button" onclick="inputNumber(2)">2</button>
+            <button class="button" onclick="inputNumber(3)">3</button>
+            <button class="button operation" onclick="inputOperation('+')">+</button>
+
+            <button class="button double" onclick="inputNumber(0)">0</button>
+            <button class="button">.</button>
+            <button class="button operation" onclick="calculate()">=</button>
+        </div>
+    </div>
+
+    <!-- Liste déroulante pour choisir la couleur -->
+    <select class="color-button" id="colorSelector" onchange="changeColor()">
+        <option value="#333">Noir</option>
+        <option value="#ff6347">Rouge</option>
+        <option value="#8a2be2">Violet</option>
+        <option value="#2e8b57">Vert</option>
+        <option value="#f5f5f5">Blanc</option>
+    </select>
+
+    <!-- Bouton pour choisir le fond -->
+    <select class="background-button" id="backgroundSelector" onchange="changeBackground()">
+        <option value="">Sélectionner le fond</option>
+        <option value="#ffffff">Blanc</option>
+        <option value="#f0f0f0">Gris clair</option>
+        <option value="#000000">Noir</option>
+        <option value="custom">Image personnalisée</option>
+    </select>
+    <input type="file" id="backgroundInput" style="display: none;" accept="image/*" onchange="changeBackgroundImage()">
+
+    <!-- Musique de fond -->
+    <div class="music-icon" onclick="chooseMusic()">🎵</div>
+    <input type="file" id="musicInput" style="display: none;" accept="audio/*" onchange="loadMusic()">
+
+    <!-- Paramètres -->
+    <div class="settings-icon" onclick="toggleSettings()">⚙️</div>
+
+    <div class="settings-modal" id="settingsModal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="toggleSettings()">✖</span>
+            <h3>Paramètres</h3>
+            <label for="volume">Volume</label>
+            <input type="range" id="volume" class="volume-slider" min="0" max="1" step="0.1" value="0.5" onchange="changeVolume(this.value)">
+            <div class="contact-info">
+                <p>Pour nous contacter:</p>
+                <p>Email: <a href="mailto:calculatrice@calculatrice.fr">calculatrice@calculatrice.fr</a></p>
+            </div>
+            <div class="beta-info">
+                <p><strong>Version Bêta</strong></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Musique -->
+    <audio id="backgroundMusic" preload="auto" loop></audio>
+
+    <script>
+        let currentInput = '';
+        let operator = null;
+        let previousInput = '';
+        const display = document.getElementById('display');
+        const music = document.getElementById('backgroundMusic');
+
+        // Volume de la musique
+        music.volume = 0.5;
+
+        function clearDisplay() {
+            currentInput = '';
+            operator = null;
+            previousInput = '';
+            updateDisplay('0');
+        }
+
+        function inputNumber(num) {
+            if (currentInput === '0') {
+                currentInput = num.toString();
+            } else {
+                currentInput += num.toString();
+            }
+            updateDisplay(currentInput);
+        }
+
+        function inputOperation(op) {
+            if (currentInput === '') return;
+            operator = op;
+            previousInput = currentInput;
+            currentInput = '';
+        }
+
+        function calculate() {
+            if (operator === null || currentInput === '') return;
+            const result = eval(`${previousInput} ${operator} ${currentInput}`);
+            updateDisplay(result);
+            currentInput = result.toString();
+            operator = null;
+            previousInput = '';
+        }
+
+        function updateDisplay(value) {
+            display.textContent = value;
+        }
+
+        // Changer la couleur de la calculatrice
+        function changeColor() {
+            const color = document.getElementById('colorSelector').value;
+            document.querySelector('.calculator').style.backgroundColor = color;
+        }
+
+        // Changer le fond
+        function changeBackground() {
+            const background = document.getElementById('backgroundSelector').value;
+            if (background === 'custom') {
+                document.getElementById('backgroundInput').click();
+            } else {
+                document.body.style.backgroundColor = background;
+                document.body.style.backgroundImage = '';
+            }
+        }
+
+        // Appliquer une image de fond
+        function changeBackgroundImage() {
+            const file = document.getElementById('backgroundInput').files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.body.style.backgroundImage = `url('${e.target.result}')`;
+                    document.body.style.backgroundSize = 'cover';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Choisir un fichier audio pour la musique de fond
+        function chooseMusic() {
+            document.getElementById('musicInput').click();
+        }
+
+        // Charger et jouer une musique de l'utilisateur
+        function loadMusic() {
+            const file = document.getElementById('musicInput').files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    music.src = e.target.result;
+                    music.play();
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Changer le volume de la musique
+        function changeVolume(volume) {
+            music.volume = volume;
+        }
+
+        // Afficher/masquer les paramètres
+        function toggleSettings() {
+            const modal = document.getElementById('settingsModal');
+            modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+        }
+    </script>
+</body>
+</html>
